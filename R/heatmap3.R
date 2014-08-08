@@ -14,6 +14,7 @@
 ##' @param ColSideAnn data frame with continuous and factor variables as annotation information. This parameter will be sorted by coloum dendrogram and then passed to ColSideFun.
 ##' @param ColSideWidth numeric the height of column side area, which can be used by ColSideFun function.
 ##' @param ColSideCut numeric the value to be used in cutting coloum dendrogram. The dendrogram and annotation will be divided into different parts and labeled respectively.
+##' @param colorCell A data.frame with 3 columns, indicating which cells will be colored by specific colors. The first column is row index, second column is column index, and the third column is color.
 ##' @param method the agglomeration method to be used by \code{\link{hclust}} function. This should be (an unambiguous abbreviation of) one of "ward", "single", "complete", "average", "mcquitty", "median" or "centroid".
 ##' @param balanceColor logical indicating if the colors need to be balanced so that the median color will represent the 0 value. The default value is F.
 ##' @param ColAxisColors integer indicating which coloum of ColSideColors will be used as colors for labels in coloum axis. The default value is 0, which means all coloum labels will be in black color.
@@ -55,7 +56,7 @@ heatmap3<-function (x, Rowv = NULL, Colv = if (symm) "Rowv" else NULL,
 		distfun = function(x) as.dist(1 - cor(t(x),use="pa")),balanceColor=F, ColSideLabs,RowSideLabs,showColDendro=T,showRowDendro=T,col=colorRampPalette(c("navy", "white", "firebrick3"))(1024),legendfun,method="complete",ColAxisColors=0,RowAxisColors=0, hclustfun = hclust, reorderfun = function(d, 
 				w) reorder(d, w), add.expr,symm = FALSE, revC = identical(Colv, 
 				"Rowv"), scale = c("row", "column", "none"), na.rm = TRUE, 
-		ColSideFun,ColSideAnn,ColSideWidth=0.4,ColSideCut,
+		ColSideFun,ColSideAnn,ColSideWidth=0.4,ColSideCut,colorCell,
 		file="heatmap3.pdf",topN=NA,filterFun=sd,
 		margins = c(5, 5), ColSideColors, RowSideColors, cexRow = 0.2 + 
 				1/log10(nrow(x)), cexCol = 0.2 + 1/log10(ncol(x)), labRow = NULL, 
@@ -268,7 +269,7 @@ heatmap3<-function (x, Rowv = NULL, Colv = if (symm) "Rowv" else NULL,
 		if (verbose) {
 			cat(paste0("The samples could be cut into ",length(ColSideCutResult)," parts with height ",ColSideCut))
 			cat("\n")
-			ColSideCutResultSubIndList<-NULL
+			ColSideCutResultSubIndList<-list()
 			for (i in 1:length(ColSideCutResult)) {
 				ColSideCutResultSubInd<-order.dendrogram(ColSideCutResult[[i]])
 				ColSideCutResultSubIndList[[i]]<-ColSideCutResultSubInd
@@ -282,7 +283,7 @@ heatmap3<-function (x, Rowv = NULL, Colv = if (symm) "Rowv" else NULL,
 					names(cutTable)[i]<-colnames(ColSideAnn)[i]
 					pvalue<-chisq.test(cutTable[[i]])$p.value
 					cat(paste0("Differential distribution for ",colnames(ColSideAnn)[i],", p value by chi-squared test: ",round(pvalue,3),"\n"))
-					cutTable[[i]]<-rbind(cutTable[[i]],round(cutTable[[i]][1,]/rowSums(cutTable[[i]]),2))
+					cutTable[[i]]<-rbind(cutTable[[i]],round(cutTable[[i]][1,]/colSums(cutTable[[i]]),2))
 					row.names(cutTable[[i]])[nrow(cutTable[[i]])]<-paste0(row.names(cutTable[[i]])[1],"_Percent")
 					cutTable[[i]]<-cbind(cutTable[[i]],pValue=c(pvalue,rep(NA,nrow(cutTable[[i]])-1)))
 				} else { #continous
@@ -348,6 +349,11 @@ heatmap3<-function (x, Rowv = NULL, Colv = if (symm) "Rowv" else NULL,
 	else iy <- 1L:nr
 	image(1L:nc, 1L:nr, x, xlim = 0.5 + c(0, nc), ylim = 0.5 + 
 					c(0, nr), axes = FALSE, xlab = "", ylab = "", col=col,useRaster=useRaster,...)
+	if (!missing(colorCell)) {
+		colorCell[,1]<-rowInd[colorCell[,1]]
+		colorCell[,2]<-colInd[colorCell[,2]]
+		rect(colorCell[,2]-0.5,colorCell[,1]-0.5,colorCell[,2]+0.5,colorCell[,1]+0.5,col="grey",border=NA)
+	}
 	if (!missing(ColSideColors) & ColAxisColors!=0) {
 		mtext(1, at=1L:nc, text = labCol, las = 2, line = 0.5,cex = cexCol,col=ColSideColors[colInd,ColAxisColors])
 	} else {

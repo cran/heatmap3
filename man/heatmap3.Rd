@@ -11,12 +11,13 @@ heatmap3(x, Rowv = NULL, Colv = if (symm) "Rowv" else NULL,
   RowAxisColors = 0, hclustfun = hclust, reorderfun = function(d, w)
   reorder(d, w), add.expr, symm = FALSE, revC = identical(Colv, "Rowv"),
   scale = c("row", "column", "none"), na.rm = TRUE, ColSideFun, ColSideAnn,
-  ColSideWidth = 0.4, ColSideCut, file = "heatmap3.pdf", topN = NA,
-  filterFun = sd, margins = c(5, 5), ColSideColors, RowSideColors,
-  cexRow = 0.2 + 1/log10(nrow(x)), cexCol = 0.2 + 1/log10(ncol(x)),
-  labRow = NULL, labCol = NULL, main = NULL, xlab = NULL, ylab = NULL,
-  keep.dendro = FALSE, verbose = getOption("verbose"), useRaster = if
-  (ncol(x) * nrow(x) >= 50000) TRUE else FALSE, ...)
+  ColSideWidth = 0.4, ColSideCut, colorCell, file = "heatmap3.pdf",
+  topN = NA, filterFun = sd, margins = c(5, 5), ColSideColors,
+  RowSideColors, cexRow = 0.2 + 1/log10(nrow(x)), cexCol = 0.2 +
+  1/log10(ncol(x)), labRow = NULL, labCol = NULL, main = NULL,
+  xlab = NULL, ylab = NULL, keep.dendro = FALSE,
+  verbose = getOption("verbose"), useRaster = if (ncol(x) * nrow(x) >=
+  50000) TRUE else FALSE, ...)
 }
 \arguments{
 \item{useRaster}{logical; if TRUE a bitmap raster is used to plot the image instead of polygons. The grid must be regular in that case, otherwise an error is raised.}
@@ -36,6 +37,8 @@ heatmap3(x, Rowv = NULL, Colv = if (symm) "Rowv" else NULL,
 \item{ColSideWidth}{numeric the height of column side area, which can be used by ColSideFun function.}
 
 \item{ColSideCut}{numeric the value to be used in cutting coloum dendrogram. The dendrogram and annotation will be divided into different parts and labeled respectively.}
+
+\item{colorCell}{A data.frame with 3 columns, indicating which cells will be colored by specific colors. The first column is row index, second column is column index, and the third column is color.}
 
 \item{method}{the agglomeration method to be used by \code{\link{hclust}} function. This should be (an unambiguous abbreviation of) one of "ward", "single", "complete", "average", "mcquitty", "median" or "centroid".}
 
