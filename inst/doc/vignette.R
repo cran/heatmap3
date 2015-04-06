@@ -1,23 +1,17 @@
-
-## ----setting, echo=FALSE, cache=T----------------------------------------
+## ----setting, echo=FALSE, cache=T-----------------------
 options(width=58)
 
-
-## ----heatmap3Example, tidy=T,warning=FALSE-------------------------------
+## ----heatmap3Example, tidy=T,warning=FALSE--------------
 library(heatmap3)
 example(heatmap3)
 
-
-## ----showLegend, tidy=T, eval=T------------------------------------------
+## ----showLegend, tidy=T, eval=T-------------------------
 library(heatmap3)
 showLegend
 
-
-## ----showLegendExample, tidy=T-------------------------------------------
+## ----showLegendExample, tidy=T--------------------------
 example(showLegend)
 
-
-## ----showAnnExample, tidy=T----------------------------------------------
+## ----showAnnExample, tidy=T-----------------------------
 example(showAnn)
-
 
