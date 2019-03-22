@@ -1,3 +1,8 @@
+##' @import grDevices
+##' @import graphics
+##' @importFrom stats aov as.dendrogram as.dist chisq.test cor lowess na.omit order.dendrogram quantile reorder sd
+NULL
+
 ##' heatmap3
 ##' 
 ##' The function heatmap3 is completely compatible with the original R function heatmap, and provides more new features.
@@ -5,6 +10,8 @@
 ##' 
 ##' 
 ##' @inheritParams stats::heatmap
+##' @param distfunC function used to compute the distance (dissimilarity) between and columns. Will be the same as distfun if not specified.
+##' @param distfunR function used to compute the distance (dissimilarity) between and rows. Will be the same as distfun if not specified.
 ##' @param useRaster logical; if TRUE a bitmap raster is used to plot the image instead of polygons. The grid must be regular in that case, otherwise an error is raised.
 ##' @param file pdf file name, only works when topN was used.
 ##' @param topN vector a list of numbers. topN genes will be used to generate the heatmaps.
@@ -24,6 +31,7 @@
 ##' @param showRowDendro logical indicating if the row dendrogram should be plotted (when Rowv isn't NA).
 ##' @param RowSideLabs label for RowSideColors
 ##' @param ColSideLabs label for ColSideColors
+##' @param returnDistMatrix logical indicating if the distance matrix will be returned
 ##' @param col specifying the colors, used in \code{\link{image}} function.
 ##' @param cexRow,cexCol positive numbers, used as cex.axis in for the row or column axis labeling. The defaults currently only use number of rows or columns, respectively.
 ##' @param labRow,labCol character vectors with row and column labels to use; these default to rownames(x) or colnames(x), respectively.
@@ -61,11 +69,11 @@
 ##' #annotations distribution in different clusters and the result of statistic tests
 ##' result$cutTable
 heatmap3<-function (x, Rowv = NULL, Colv = if (symm) "Rowv" else NULL, 
-		distfun = function(x) as.dist(1 - cor(t(x),use="pa")),balanceColor=F, ColSideLabs,RowSideLabs,showColDendro=T,showRowDendro=T,col=colorRampPalette(c("navy", "white", "firebrick3"))(1024),legendfun,method="complete",ColAxisColors=0,RowAxisColors=0, hclustfun = hclust, reorderfun = function(d, 
+		distfun = function(x) as.dist(1 - cor(t(x),use="pa")),distfunC,distfunR,balanceColor=F, ColSideLabs,RowSideLabs,showColDendro=T,showRowDendro=T,col=colorRampPalette(c("navy", "white", "firebrick3"))(1024),legendfun,method="complete",ColAxisColors=0,RowAxisColors=0, hclustfun = hclust, reorderfun = function(d, 
 				w) reorder(d, w), add.expr,symm = FALSE, revC = identical(Colv, 
 				"Rowv"), scale = c("row", "column", "none"), na.rm = TRUE, 
 		ColSideFun,ColSideAnn,ColSideWidth=0.4,ColSideCut,colorCell,highlightCell,
-		file="heatmap3.pdf",topN=NA,filterFun=sd,
+		file="heatmap3.pdf",topN=NA,filterFun=sd,returnDistMatrix=FALSE,
 		margins = c(5, 5), ColSideColors, RowSideColors, cexRow = 0.2 + 
 				1/log10(nrow(x)), cexCol = 0.2 + 1/log10(ncol(x)),lasRow=2,lasCol=2, labRow = NULL, 
 		labCol = NULL, main = NULL, xlab = NULL, ylab = NULL, keep.dendro = FALSE, 
@@ -112,6 +120,15 @@ heatmap3<-function (x, Rowv = NULL, Colv = if (symm) "Rowv" else NULL,
 			RowSideColors<-cbind(RowSideColors)
 		}
 	}
+	if (missing(distfunC)) {
+		distfunC<-distfun
+	}
+	if (missing(distfunR)) {
+		distfunR<-distfun
+	}
+	distMatrixC=NULL
+	distMatrixR=NULL
+	
 	if (length(di <- dim(x)) != 2 || !is.numeric(x)) 
 		stop("'x' must be a numeric matrix")
 	nr <- di[1L]
@@ -132,7 +149,8 @@ heatmap3<-function (x, Rowv = NULL, Colv = if (symm) "Rowv" else NULL,
 		if (inherits(Rowv, "dendrogram")) 
 			ddr <- Rowv
 		else {
-			hcr <- hclustfun(distfun(x),method=method)
+			distMatrixR=distfunR(x)
+			hcr <- hclustfun(distMatrixR,method=method)
 			ddr <- as.dendrogram(hcr)
 			if (!is.logical(Rowv) || Rowv) 
 				ddr <- reorderfun(ddr, Rowv)
@@ -150,9 +168,8 @@ heatmap3<-function (x, Rowv = NULL, Colv = if (symm) "Rowv" else NULL,
 			ddc <- ddr
 		}
 		else {
-			hcc <- hclustfun(distfun(if (symm) 
-										x
-									else t(x)),method=method)
+			distMatrixC=distfunC(if (symm) x else t(x))
+			hcc <- hclustfun(distMatrixC,method=method)
 			ddc <- as.dendrogram(hcc)
 			if (!is.logical(Colv) || Colv) 
 				ddc <- reorderfun(ddc, Colv)
@@ -228,9 +245,10 @@ heatmap3<-function (x, Rowv = NULL, Colv = if (symm) "Rowv" else NULL,
 		}
 	}
 	
-	layout(lmat, widths = lwid, heights = lhei, respect = TRUE)
+	graphics::layout(lmat, widths = lwid, heights = lhei, respect = TRUE)
 	if (!missing(legendfun)) {
 		par(mar = c(0, 0, 0, 0))
+		par(xpd=NA)
 		legendfun()
 	} else {
 		par(mar = c(5, 1, 1, 0))
@@ -359,16 +377,20 @@ heatmap3<-function (x, Rowv = NULL, Colv = if (symm) "Rowv" else NULL,
 	image(1L:nc, 1L:nr, x, xlim = 0.5 + c(0, nc), ylim = 0.5 + 
 					c(0, nr), axes = FALSE, xlab = "", ylab = "", col=col,useRaster=useRaster,...)
 	if (!missing(colorCell)) {
-		colorCell[,1]<-rowInd[colorCell[,1]]
-		colorCell[,2]<-colInd[colorCell[,2]]
+#		colorCell[,1]<-rowInd[colorCell[,1]]
+#		colorCell[,2]<-colInd[colorCell[,2]]
+		colorCell[,1]<-match(colorCell[,1],rowInd)
+		colorCell[,2]<-match(colorCell[,2],colInd)
 		rect(colorCell[,2]-0.5,colorCell[,1]-0.5,colorCell[,2]+0.5,colorCell[,1]+0.5,col=as.character(colorCell[,3]),border=NA)
 	}
 	if (!missing(highlightCell)) {
 		if (ncol(highlightCell)==3) {
 			highlightCell$lwd<-1
 		}
-		highlightCell[,1]<-rowInd[highlightCell[,1]]
-		highlightCell[,2]<-colInd[highlightCell[,2]]
+#		highlightCell[,1]<-rowInd[highlightCell[,1]]
+#		highlightCell[,2]<-colInd[highlightCell[,2]]
+		highlightCell[,1]<-match(highlightCell[,1],rowInd)
+		highlightCell[,2]<-match(highlightCell[,2],colInd)
 		rect(highlightCell[,2]-0.5,highlightCell[,1]-0.5,highlightCell[,2]+0.5,highlightCell[,1]+0.5,border=as.character(highlightCell[,3]),lwd=as.integer(highlightCell[,4]))
 	}
 	if (!missing(ColSideColors) & ColAxisColors!=0) {
@@ -405,7 +427,10 @@ heatmap3<-function (x, Rowv = NULL, Colv = if (symm) "Rowv" else NULL,
 		title(main, cex.main = 1.5 * op[["cex.main"]])
 	}
 	invisible(list(rowInd = rowInd, colInd = colInd, Rowv = if (keep.dendro && 
-							doRdend) ddr, Colv = if (keep.dendro && doCdend) ddc, cutTable = if (!missing(ColSideAnn) && !missing(ColSideCut)) cutTable))
+							doRdend) ddr, Colv = if (keep.dendro && doCdend) ddc, 
+							cutTable = if (!missing(ColSideAnn) && !missing(ColSideCut)) cutTable,
+							DistMatrixC = if (returnDistMatrix) distMatrixC,
+							DistMatrixR = if (returnDistMatrix) distMatrixR))
 }
 
 ##' showLegend

@@ -1,4 +1,4 @@
-## ----setting, echo=FALSE, cache=T-----------------------
+## ----setting, echo=FALSE, cache=FALSE-------------------
 options(width=58)
 
 ## ----heatmap3Example, tidy=T,warning=FALSE--------------

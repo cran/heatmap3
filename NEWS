@@ -1,3 +1,18 @@
+2019-03-20
+heatmap3 1.1.6: Minor updates to fix the NOTEs in R cmd check.
+
+2018-09-05
+heatmap3 1.1.5: Return distance matrix as requested. Documents were improved.
+
+2016-10-07
+heatmap3 1.1.4: Fixed a bug for highlightCell and colorCell
+
+2015-07-27
+heatmap3 1.1.3: Improved legend function. Added parameter distfunC and distfunR.
+
+2015-04-12
+heatmap3 1.1.2: Delete caches in vignette directory.
+
 2015-04-06
 heatmap3 1.1.1: Fixed a bug (method parameter now works in both row and column cluster); Documents and examples were improved.
 
